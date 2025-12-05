@@ -1,0 +1,235 @@
+name: Build and Push Artifacts
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'app/podinfo/**'
+      - 'Dockerfile'
+      - '.github/workflows/build.yml'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+  ECR_REPOSITORY: podinfo-demo/podinfo
+
+jobs:
+  build:
+    name: Build Sign and Push
+    runs-on: ubuntu-latest
+
+    outputs:
+      image-digest-ec2: ${{ steps.push-ec2.outputs.digest }}
+      image-uri-ec2: ${{ steps.push-ec2.outputs.image-uri }}
+      image-digest-lambda: ${{ steps.push-lambda.outputs.digest }}
+      image-uri-lambda: ${{ steps.push-lambda.outputs.image-uri }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: 'v2.2.0'
+
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Prepare metadata
+        id: meta
+        run: |
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          BUILD_TIME=$(date +%Y%m%d-%H%M%S)
+          
+          cd app/podinfo
+          VERSION=$(git describe --tags --always)
+          cd ../..
+          
+          TAG="${VERSION}-${COMMIT_HASH}"
+          
+          echo "short-sha=${COMMIT_HASH}" >> $GITHUB_OUTPUT
+          echo "timestamp=${BUILD_TIME}" >> $GITHUB_OUTPUT
+          echo "podinfo-version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "image-tag=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Build EC2 Container
+        id: build-ec2
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.image-tag }}-ec2
+          build-args: |
+            PODINFO_VERSION=${{ steps.meta.outputs.podinfo-version }}
+            BUILD_DATE=${{ steps.meta.outputs.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+      - name: Build Lambda Container
+        id: build-lambda
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.lambda
+          push: false
+          load: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.image-tag }}-lambda
+
+      - name: Push EC2 Image
+        id: push-ec2
+        run: |
+          FULL_IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.image-tag }}-ec2"
+          
+          docker push $FULL_IMAGE_URI
+          
+          SHA_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $FULL_IMAGE_URI | cut -d'@' -f2)
+          FINAL_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}@${SHA_DIGEST}"
+          
+          echo "digest=${SHA_DIGEST}" >> $GITHUB_OUTPUT
+          echo "image-uri=${FINAL_URI}" >> $GITHUB_OUTPUT
+          
+          echo "Successfully pushed EC2 artifact: ${FINAL_URI}"
+
+      - name: Push Lambda Image
+        id: push-lambda
+        run: |
+          FULL_IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.image-tag }}-lambda"
+          
+          docker push $FULL_IMAGE_URI
+          
+          SHA_DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' $FULL_IMAGE_URI | cut -d'@' -f2)
+          FINAL_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}@${SHA_DIGEST}"
+          
+          echo "digest=${SHA_DIGEST}" >> $GITHUB_OUTPUT
+          echo "image-uri=${FINAL_URI}" >> $GITHUB_OUTPUT
+          
+          echo "Successfully pushed Lambda artifact: ${FINAL_URI}"
+
+      - name: Sign EC2 Artifact
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          TARGET_URI="${{ steps.push-ec2.outputs.image-uri }}"
+          echo "Initiating signing process for EC2: ${TARGET_URI}"
+          cosign sign --yes ${TARGET_URI}
+          echo "EC2 signing complete."
+
+      - name: Sign Lambda Artifact
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          TARGET_URI="${{ steps.push-lambda.outputs.image-uri }}"
+          echo "Initiating signing process for Lambda: ${TARGET_URI}"
+          cosign sign --yes ${TARGET_URI}
+          echo "Lambda signing complete."
+
+      - name: Create SBOM for EC2
+        run: |
+          TARGET_URI="${{ steps.push-ec2.outputs.image-uri }}"
+          echo "Creating SBOM for: ${TARGET_URI}"
+          syft ${TARGET_URI} -o spdx-json > sbom-ec2.spdx.json
+          syft ${TARGET_URI} -o cyclonedx-json > sbom-ec2.cyclonedx.json
+          echo "SBOM creation for EC2 finished."
+
+      - name: Create SBOM for Lambda
+        run: |
+          TARGET_URI="${{ steps.push-lambda.outputs.image-uri }}"
+          echo "Creating SBOM for: ${TARGET_URI}"
+          syft ${TARGET_URI} -o spdx-json > sbom-lambda.spdx.json
+          syft ${TARGET_URI} -o cyclonedx-json > sbom-lambda.cyclonedx.json
+          echo "SBOM creation for Lambda finished."
+
+      - name: Archive SBOMs
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ steps.meta.outputs.image-tag }}
+          path: |
+            sbom-ec2.spdx.json
+            sbom-ec2.cyclonedx.json
+            sbom-lambda.spdx.json
+            sbom-lambda.cyclonedx.json
+          retention-days: 90
+
+      - name: Verify EC2 Signature
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          TARGET_URI="${{ steps.push-ec2.outputs.image-uri }}"
+          echo "Checking signature for EC2..."
+          cosign verify ${TARGET_URI} \
+            --certificate-identity="https://github.com/${{ github.repository }}/.github/workflows/build.yml@${{ github.ref }}" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
+          echo "EC2 Verified."
+
+      - name: Verify Lambda Signature
+        env:
+          COSIGN_EXPERIMENTAL: 1
+        run: |
+          TARGET_URI="${{ steps.push-lambda.outputs.image-uri }}"
+          echo "Checking signature for Lambda..."
+          cosign verify ${TARGET_URI} \
+            --certificate-identity="https://github.com/${{ github.repository }}/.github/workflows/build.yml@${{ github.ref }}" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com"
+          echo "Lambda Verified."
+
+      - name: Execution Summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          # Build & Push Report
+          
+          ## Container Artifacts
+          
+          ### EC2 Target
+          - **URI:** \`${{ steps.push-ec2.outputs.image-uri }}\`
+          - **Digest:** \`${{ steps.push-ec2.outputs.digest }}\`
+          - **Status:** Ready
+          
+          ### Lambda Target
+          - **URI:** \`${{ steps.push-lambda.outputs.image-uri }}\`
+          - **Digest:** \`${{ steps.push-lambda.outputs.digest }}\`
+          - **Status:** Ready
+          
+          ---
+          
+          ## Supply Chain Security
+          
+          - **Signing:** Cosign (Keyless OIDC)
+          - **SBOM:** SPDX & CycloneDX
+          - **Verification:** Sigstore Rekor
+          
+          [Download SBOMs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          ---
+          
+          ## Build Info
+          
+          | Key | Value |
+          |---|---|
+          | Tag | \`${{ steps.meta.outputs.image-tag }}\` |
+          | Version | \`${{ steps.meta.outputs.podinfo-version }}\` |
+          | Commit | \`${{ github.sha }}\` |
+          
+          EOF

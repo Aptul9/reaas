@@ -1,0 +1,442 @@
+name: Production Promotion
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_digest_lambda:
+        description: "Lambda digest (sha256:...) - optional"
+        required: false
+      image_digest_ec2:
+        description: "EC2 digest (sha256:...) - optional"
+        required: false
+      approval_checklist:
+        description: "Validation Confirmation"
+        required: true
+        type: choice
+        options:
+          - "Confirmed: Ready for Production"
+          - "Stop: Checklist Incomplete"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+  REPO_NAME: podinfo-demo/podinfo
+
+jobs:
+  check-approval:
+    name: Validation Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Input
+        run: |
+          if [ "${{ github.event.inputs.approval_checklist }}" != "Confirmed: Ready for Production" ]; then
+            echo "Deployment halted: Approval checklist not confirmed."
+            exit 1
+          fi
+          echo "Approval verified."
+
+  resolve-artifacts:
+    name: Resolve Artifacts
+    runs-on: ubuntu-latest
+    needs: check-approval
+    outputs:
+      lambda_digest: ${{ steps.get-digests.outputs.lambda }}
+      ec2_digest: ${{ steps.get-digests.outputs.ec2 }}
+    steps:
+      - name: Authenticate AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - id: get-digests
+        run: |
+          echo "Resolving image digests..."
+
+          # Resolve Lambda
+          if [ -n "${{ github.event.inputs.image_digest_lambda }}" ]; then
+            L_DIGEST="${{ github.event.inputs.image_digest_lambda }}"
+            echo "Using input digest for Lambda."
+          else
+            L_DIGEST=$(aws ecr describe-images \
+              --region ${AWS_REGION} \
+              --repository-name ${REPO_NAME} \
+              --query "sort_by(imageDetails[?imageTags!=null], &imagePushedAt) | reverse(@)[?contains(imageTags[0], 'lambda')] | [0].imageDigest" \
+              --output text)
+            echo "Resolved latest Lambda digest from ECR."
+          fi
+
+          # Resolve EC2
+          if [ -n "${{ github.event.inputs.image_digest_ec2 }}" ]; then
+            E_DIGEST="${{ github.event.inputs.image_digest_ec2 }}"
+            echo "Using input digest for EC2."
+          else
+            E_DIGEST=$(aws ecr describe-images \
+              --region ${AWS_REGION} \
+              --repository-name ${REPO_NAME} \
+              --query "sort_by(imageDetails[?imageTags!=null], &imagePushedAt) | reverse(@)[?contains(imageTags[0], 'ec2')] | [0].imageDigest" \
+              --output text)
+            echo "Resolved latest EC2 digest from ECR."
+          fi
+
+          echo "lambda=${L_DIGEST}" >> $GITHUB_OUTPUT
+          echo "ec2=${E_DIGEST}" >> $GITHUB_OUTPUT
+          
+          echo "Lambda: ${L_DIGEST}"
+          echo "EC2: ${E_DIGEST}"
+
+  verify-registry:
+    name: Verify Registry
+    runs-on: ubuntu-latest
+    needs: resolve-artifacts
+    steps:
+      - name: Setup AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Check Lambda Artifact
+        run: |
+          DIGEST="${{ needs.resolve-artifacts.outputs.lambda_digest }}"
+          aws ecr describe-images --repository-name ${REPO_NAME} --image-ids imageDigest="${DIGEST}" > /dev/null
+          echo "Lambda artifact exists."
+
+      - name: Check EC2 Artifact
+        run: |
+          DIGEST="${{ needs.resolve-artifacts.outputs.ec2_digest }}"
+          aws ecr describe-images --repository-name ${REPO_NAME} --image-ids imageDigest="${DIGEST}" > /dev/null
+          echo "EC2 artifact exists."
+
+  prod-lambda:
+    name: Lambda Production
+    runs-on: ubuntu-latest
+    needs: [verify-registry, resolve-artifacts]
+    environment: production
+    steps:
+      - name: Setup AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Deploy Code
+        run: |
+          DIGEST="${{ needs.resolve-artifacts.outputs.lambda_digest }}"
+          URI="553600746148.dkr.ecr.eu-central-1.amazonaws.com/${REPO_NAME}@${DIGEST}"
+          FUNC="podinfo-demo-podinfo-prod"
+          
+          echo "Updating function code..."
+          aws lambda update-function-code --function-name ${FUNC} --image-uri ${URI} --publish
+          
+          echo "Waiting for update..."
+          aws lambda wait function-updated --function-name ${FUNC}
+          
+          NEW_VER=$(aws lambda list-versions-by-function --function-name ${FUNC} --query 'Versions[-1].Version' --output text)
+          
+          echo "Updating live alias to version: ${NEW_VER}"
+          aws lambda update-alias --function-name ${FUNC} --name live --function-version ${NEW_VER}
+          
+      - name: Health Check
+        run: |
+          ENDPOINT=$(aws apigatewayv2 get-apis --query "Items[?Name=='podinfo-demo-prod'].ApiEndpoint" --output text)
+          
+          echo "Probing: ${ENDPOINT}/healthz"
+          
+          for i in {1..15}; do
+            CODE=$(curl -s -o /dev/null -w "%{http_code}" ${ENDPOINT}/healthz)
+            if [ "$CODE" == "200" ]; then
+              echo "Health check passed."
+              exit 0
+            fi
+            sleep 5
+          done
+          
+          echo "Health check failed."
+          exit 1
+
+  prod-ec2:
+    name: EC2 Production
+    runs-on: ubuntu-latest
+    needs: [prod-lambda, resolve-artifacts]
+    environment: production-ec2
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Update Launch Template
+        run: |
+          set -e
+          DIGEST="${{ needs.resolve-artifacts.outputs.ec2_digest }}"
+          ENV="prod"
+          
+          # Locate Launch Template
+          TEMPLATE_ID=$(aws ec2 describe-launch-templates \
+            --filters "Name=tag:Name,Values=podinfo-demo-lt-${ENV}" \
+            --query "LaunchTemplates[0].LaunchTemplateId" \
+            --output text)
+
+          echo "Found Template ID: ${TEMPLATE_ID}"
+          echo "LT_ID=${TEMPLATE_ID}" >> $GITHUB_ENV
+          
+          # Fetch and Modify User Data
+          RAW_DATA=$(aws ec2 describe-launch-template-versions \
+            --launch-template-id ${TEMPLATE_ID} \
+            --versions '$Latest' \
+            --query 'LaunchTemplateVersions[0].LaunchTemplateData.UserData' \
+            --output text)
+          
+          DECODED=$(echo "${RAW_DATA}" | base64 -d)
+          UPDATED=$(echo "$DECODED" | sed -E "s|podinfo-demo/podinfo@sha256:[a-f0-9]{64}|podinfo-demo/podinfo@${DIGEST}|g")
+          ENCODED=$(echo "$UPDATED" | base64 -w0)
+          
+          # Create Version
+          VER=$(aws ec2 create-launch-template-version \
+            --launch-template-id ${TEMPLATE_ID} \
+            --source-version '$Latest' \
+            --launch-template-data "{\"UserData\":\"${ENCODED}\"}" \
+            --query 'LaunchTemplateVersion.VersionNumber' \
+            --output text)
+          
+          echo "New template version created: ${VER}"
+          
+      - name: Locate Active ASG
+        run: |
+          set -e
+          ENV="prod"
+
+          # Find CodeDeploy ASG with capacity
+          TARGET_ASG=$(aws autoscaling describe-auto-scaling-groups \
+            --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, 'CodeDeploy_podinfo-demo-ec2-dg-${ENV}_') && DesiredCapacity > \`0\`]|[0].AutoScalingGroupName" \
+            --output text)
+
+          if [ -z "$TARGET_ASG" ] || [ "$TARGET_ASG" == "None" ]; then
+            echo "Critical: No active CodeDeploy ASG found for production."
+            exit 1
+          fi
+
+          echo "Active ASG: ${TARGET_ASG}"
+          echo "asg-name=${TARGET_ASG}" >> $GITHUB_OUTPUT
+
+          # Prepare ASG for deployment
+          echo "Updating ASG configuration..."
+          aws autoscaling update-auto-scaling-group \
+            --auto-scaling-group-name "${TARGET_ASG}" \
+            --launch-template "LaunchTemplateId=${LT_ID},Version=\$Latest"
+          
+      - name: Prepare Deployment Artifacts
+        run: |
+          URI="553600746148.dkr.ecr.eu-central-1.amazonaws.com/${REPO_NAME}@${{ needs.resolve-artifacts.outputs.ec2_digest }}"
+          
+          mkdir -p build/scripts
+          
+          # AppSpec
+          cat > build/appspec.yml <<'EOF'
+          version: 0.0
+          os: linux
+          hooks:
+            ApplicationStop:
+              - location: scripts/stop.sh
+                timeout: 60
+                runas: root
+            BeforeInstall:
+              - location: scripts/install.sh
+                timeout: 300
+                runas: root
+            ApplicationStart:
+              - location: scripts/start.sh
+                timeout: 300
+                runas: root
+            ValidateService:
+              - location: scripts/validate.sh
+                timeout: 300
+                runas: root
+          EOF
+          
+          # Scripts
+          cat > build/scripts/stop.sh <<'EOF'
+          #!/bin/bash
+          docker stop podinfo 2>/dev/null || true
+          docker rm podinfo 2>/dev/null || true
+          # Force cleanup
+          docker ps -aq -f name=podinfo | xargs -r docker rm -f
+          exit 0
+          EOF
+          
+          cat > build/scripts/install.sh <<'EOF'
+          #!/bin/bash
+          # No-op: dependencies in AMI
+          exit 0
+          EOF
+          
+          cat > build/scripts/start.sh <<'EOF'
+          #!/bin/bash
+          set -e
+          IMG="__IMG__"
+          REG="eu-central-1"
+          
+          aws ecr get-login-password --region ${REG} | docker login --username AWS --password-stdin 553600746148.dkr.ecr.eu-central-1.amazonaws.com
+          docker pull ${IMG}
+          
+          set +x 2>/dev/null
+          TOKEN=$(aws secretsmanager get-secret-value --secret-id /dockyard/SUPER_SECRET_TOKEN --region ${REG} --query SecretString --output text 2>/dev/null)
+          [ -z "$TOKEN" ] && TOKEN="err-missing-secret"
+          
+          docker run -d --name podinfo --restart unless-stopped -p 9898:9898 -e PORT=9898 -e LOG_LEVEL=info -e SUPER_SECRET_TOKEN="$TOKEN" ${IMG} >/dev/null
+          
+          unset TOKEN
+          set -x
+          
+          sleep 5
+          docker ps | grep -q podinfo || exit 1
+          EOF
+          
+          sed -i "s|__IMG__|${URI}|g" build/scripts/start.sh
+          
+          cat > build/scripts/validate.sh <<'EOF'
+          #!/bin/bash
+          for i in {1..30}; do
+            curl -f http://localhost:9898/healthz && exit 0
+            sleep 2
+          done
+          exit 1
+          EOF
+          
+          chmod +x build/scripts/*.sh
+          tar -czf deploy.tar.gz -C build .
+      
+      - name: Upload Bundle
+        id: upload
+        run: |
+          S3_BUCKET="podinfo-demo-deployments-prod-553600746148"
+          S3_KEY="deployments/prod-${{ github.run_number }}.tar.gz"
+          
+          aws s3 cp deploy.tar.gz s3://${S3_BUCKET}/${S3_KEY}
+          
+          echo "bucket=${S3_BUCKET}" >> $GITHUB_OUTPUT
+          echo "key=${S3_KEY}" >> $GITHUB_OUTPUT
+      
+      - name: Halt Pending Deployments
+        run: |
+          set +e
+          APP="podinfo-demo-ec2-prod"
+          GRP="podinfo-demo-ec2-dg-prod"
+          
+          PENDING=$(aws deploy list-deployments --application-name ${APP} --deployment-group-name ${GRP} --include-only-statuses "Created" "Queued" "InProgress" "Ready" --query 'deployments[0]' --output text 2>/dev/null)
+          
+          if [ "$PENDING" != "None" ] && [ -n "$PENDING" ]; then
+            echo "Stopping deployment: $PENDING"
+            aws deploy stop-deployment --deployment-id "$PENDING" --auto-rollback-enabled 2>/dev/null
+            sleep 30
+          fi
+          set -e
+
+      - name: Sync Deployment Group
+        run: |
+          APP="podinfo-demo-ec2-prod"
+          GRP="podinfo-demo-ec2-dg-prod"
+          
+          # Find correct ASG
+          TARGET_ASG=$(aws autoscaling describe-auto-scaling-groups \
+            --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, 'CodeDeploy_${GRP}_') && DesiredCapacity>\`0\`]|[0].AutoScalingGroupName" \
+            --output text)
+
+          if [ -z "$TARGET_ASG" ] || [ "$TARGET_ASG" == "None" ]; then
+            echo "Sync failed: No active ASG."
+            exit 1
+          fi
+
+          echo "Syncing deployment group to: ${TARGET_ASG}"
+          aws deploy update-deployment-group --application-name ${APP} --current-deployment-group-name ${GRP} --auto-scaling-groups ${TARGET_ASG}
+
+      - name: Trigger Deployment
+        id: deploy
+        run: |
+          APP="podinfo-demo-ec2-prod"
+          GRP="podinfo-demo-ec2-dg-prod"
+          
+          ID=$(aws deploy create-deployment \
+            --application-name ${APP} \
+            --deployment-group-name ${GRP} \
+            --s3-location bucket=${{ steps.upload.outputs.bucket }},key=${{ steps.upload.outputs.key }},bundleType=tgz \
+            --description "Prod release ${{ steps.resolve-artifacts.outputs.ec2_digest }}" \
+            --query 'deploymentId' \
+            --output text)
+          
+          echo "deployment-id=${ID}" >> $GITHUB_OUTPUT
+          echo "Deployment ID: ${ID}"
+      
+      - name: Await Completion
+        run: |
+          ID="${{ steps.deploy.outputs.deployment-id }}"
+          aws deploy wait deployment-successful --deployment-id ${ID}
+          echo "Deployment finished."
+
+      - name: Validation
+        run: |
+          LB_DNS=$(aws elbv2 describe-load-balancers --names "podinfo-demo-alb-prod" --query 'LoadBalancers[0].DNSName' --output text)
+          
+          echo "Probing ALB: https://${LB_DNS}/healthz"
+          
+          for i in {1..15}; do
+            CODE=$(curl -k -s -o /dev/null -w "%{http_code}" https://${LB_DNS}/healthz)
+            if [ "$CODE" == "200" ]; then
+              echo "Validation passed."
+              exit 0
+            fi
+            sleep 5
+          done
+          
+          echo "Validation failed."
+          exit 1
+
+      - name: Prune Stale Groups
+        if: success()
+        run: |
+          echo "Waiting for stabilization (120s)..."
+          sleep 120
+          
+          STALE=$(aws autoscaling describe-auto-scaling-groups \
+            --query "AutoScalingGroups[?starts_with(AutoScalingGroupName, 'CodeDeploy_podinfo-demo-ec2-dg-prod_') && DesiredCapacity==\`0\`].AutoScalingGroupName" \
+            --output text)
+          
+          if [ -n "$STALE" ]; then
+             for asg in $STALE; do
+               echo "Deleting: $asg"
+               aws autoscaling delete-auto-scaling-group --auto-scaling-group-name "$asg" --force-delete 2>/dev/null || true
+             done
+          fi
+  
+  report:
+    name: Deployment Report
+    runs-on: ubuntu-latest
+    needs: [prod-lambda, prod-ec2, resolve-artifacts]
+    if: always()
+    steps:
+      - name: Write Summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          # Production Deployment Report
+          
+          | Component | Status |
+          |-----------|--------|
+          | **Overall** | ${{ needs.prod-lambda.result == 'success' && needs.prod-ec2.result == 'success' && 'Pass' || 'Fail' }} |
+          | **Lambda** | ${{ needs.prod-lambda.result }} |
+          | **EC2** | ${{ needs.prod-ec2.result }} |
+          
+          **Artifacts**
+          - Lambda: \`${{ needs.resolve-artifacts.outputs.lambda_digest }}\`
+          - EC2: \`${{ needs.resolve-artifacts.outputs.ec2_digest }}\`
+          
+          **Metadata**
+          - Commit: \`${{ github.sha }}\`
+          - Job: #${{ github.run_number }}
+          EOF

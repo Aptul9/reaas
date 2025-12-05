@@ -1,0 +1,17 @@
+FROM public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 AS layer_source
+FROM stefanprodan/podinfo:6.5.4
+
+COPY --from=layer_source /lambda-adapter /opt/extensions/lambda-adapter
+
+ENV PORT=8080
+ENV PODINFO_PORT=8080
+ENV LOG_LEVEL=info
+
+ENV AWS_LWA_READINESS_CHECK_PATH=/healthz
+ENV AWS_LWA_READINESS_CHECK_PORT=8080
+ENV AWS_LWA_REMOVE_BASE_PATH=/
+ENV RUST_LOG=info
+
+EXPOSE 8080
+
+CMD ["./podinfo"]

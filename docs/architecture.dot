@@ -1,0 +1,126 @@
+digraph architecture {
+    rankdir=TB;
+    splines=true;
+    nodesep=0.6;
+    ranksep=1.0;
+    fontname="Inter";
+    fontsize=16;
+
+    node [shape=box, style=filled, color="#cccccc", fillcolor="#fffcee", fontname="Inter"];
+
+    subgraph cluster_github {
+        label="GitHub Actions CI/CD";
+        style=filled;
+        fillcolor="#fff9d6";
+        GH [label="GitHub Repository"];
+        BUILD [label="Build & Sign Image"];
+        SBOM [label="Generate SBOM"];
+        COSIGN [label="Cosign Image Signing"];
+        GH -> BUILD -> SBOM -> COSIGN;
+    }
+
+    subgraph cluster_global {
+        label="AWS Global Resources";
+        style=filled;
+        fillcolor="#fff9d6";
+        OIDC [label="GitHub OIDC Provider\nTrust Policy", fillcolor="#00A8E1", fontcolor="white", color="#0077B6"];
+        ECR [label="Amazon ECR\nImmutable Image Registry", fillcolor="#FF9900", color="#cc7a00"];
+        SM [label="Secrets Manager\n/dockyard/SUPER_SECRET_TOKEN", fillcolor="#DD344C", fontcolor="white"];
+        SNS [label="SNS Topic\nAlarm Notifications"];
+        S3 [label="S3 Bucket\nCodeDeploy Artifacts"];
+        CWD [label="CloudWatch Dashboard\nUnified Metrics & Logs", fillcolor="#FF9900"];
+        OIDC -> GH [label="Authenticates"];
+        COSIGN -> ECR [label="4. Push signed image"];
+    }
+
+    subgraph cluster_dev {
+        label="Dev Environment";
+        style=filled;
+        fillcolor="#fff9d6";
+        
+        subgraph cluster_lambda_dev {
+            label="Lambda Target (Dev)";
+            LAMBDA_DEV [label="Lambda Function\nContainer Image", fillcolor="#FF9900"];
+            ALIAS_DEV [label="Lambda Alias: live"];
+            CD_LAMBDA_DEV [label="CodeDeploy\nCanary 10%/5min"];
+            APIGW_DEV [label="API Gateway HTTP API"];
+            LAMBDA_DEV -> ALIAS_DEV -> CD_LAMBDA_DEV -> APIGW_DEV;
+        }
+
+        subgraph cluster_ec2_dev {
+            label="EC2 Target (Dev)";
+            ALB_DEV [label="Application Load Balancer", fillcolor="#8C4FFF", fontcolor="white"];
+            TG_BLUE_DEV [label="Target Group Blue"];
+            TG_GREEN_DEV [label="Target Group Green"];
+            ASG_DEV [label="Auto Scaling Group\n2 Instances"];
+            EC2_1_DEV [label="EC2 Instance 1\nDocker + Podinfo"];
+            EC2_2_DEV [label="EC2 Instance 2\nDocker + Podinfo"];
+            CD_EC2_DEV [label="CodeDeploy\nBlue/Green Traffic Shift"];
+            ASG_DEV -> EC2_1_DEV -> TG_BLUE_DEV -> ALB_DEV;
+            ASG_DEV -> EC2_2_DEV -> TG_GREEN_DEV -> ALB_DEV;
+            CD_EC2_DEV -> ALB_DEV [label="Traffic Shift"];
+        }
+
+        CW_LOGS_DEV [label="CloudWatch Logs\nLambda + EC2"];
+        CW_ALARMS_DEV [label="CloudWatch Alarms\n5xx, Throttles, Unhealthy"];
+    }
+
+    subgraph cluster_prod {
+        label="Prod Environment";
+        style=filled;
+        fillcolor="#fff9d6";
+        
+        subgraph cluster_lambda_prod {
+            label="Lambda Target (Prod)";
+            LAMBDA_PROD [label="Lambda Function\nContainer Image", fillcolor="#FF9900"];
+            ALIAS_PROD [label="Lambda Alias: live"];
+            CD_LAMBDA_PROD [label="CodeDeploy\nCanary 10%/5min"];
+            APIGW_PROD [label="API Gateway HTTP API"];
+            LAMBDA_PROD -> ALIAS_PROD -> CD_LAMBDA_PROD -> APIGW_PROD;
+        }
+
+        subgraph cluster_ec2_prod {
+            label="EC2 Target (Prod)";
+            ALB_PROD [label="Application Load Balancer", fillcolor="#8C4FFF", fontcolor="white"];
+            TG_BLUE_PROD [label="Target Group Blue"];
+            TG_GREEN_PROD [label="Target Group Green"];
+            ASG_PROD [label="Auto Scaling Group\n2 Instances"];
+            EC2_1_PROD [label="EC2 Instance 1\nDocker + Podinfo"];
+            EC2_2_PROD [label="EC2 Instance 2\nDocker + Podinfo"];
+            CD_EC2_PROD [label="CodeDeploy\nBlue/Green Traffic Shift"];
+            ASG_PROD -> EC2_1_PROD -> TG_BLUE_PROD -> ALB_PROD;
+            ASG_PROD -> EC2_2_PROD -> TG_GREEN_PROD -> ALB_PROD;
+            CD_EC2_PROD -> ALB_PROD [label="Traffic Shift"];
+        }
+
+        CW_LOGS_PROD [label="CloudWatch Logs\nLambda + EC2"];
+        CW_ALARMS_PROD [label="CloudWatch Alarms\n5xx, Throttles, Unhealthy"];
+    }
+
+    /* Relationships */
+    ECR -> LAMBDA_DEV [label="5a. Deploy to Dev"];
+    ECR -> ASG_DEV [label="5b. Deploy to Dev"];
+    SM -> LAMBDA_DEV [label="Runtime Secrets"];
+    SM -> EC2_1_DEV [label="Runtime Secrets"];
+    SM -> EC2_2_DEV [label="Runtime Secrets"];
+    LAMBDA_DEV -> CW_LOGS_DEV;
+    EC2_1_DEV -> CW_LOGS_DEV;
+    EC2_2_DEV -> CW_LOGS_DEV;
+    CW_LOGS_DEV -> CWD;
+    CW_ALARMS_DEV -> SNS;
+    CW_ALARMS_DEV -> CD_EC2_DEV [label="Rollback on Alarm"];
+    CW_ALARMS_DEV -> CD_LAMBDA_DEV [label="Rollback on Alarm"];
+
+    ECR -> LAMBDA_PROD [label="6. Promote to Prod\n(Manual Approval)"];
+    ECR -> ASG_PROD [label="6. Promote to Prod\n(Manual Approval)"];
+    SM -> LAMBDA_PROD [label="Runtime Secrets"];
+    SM -> EC2_1_PROD [label="Runtime Secrets"];
+    SM -> EC2_2_PROD [label="Runtime Secrets"];
+    LAMBDA_PROD -> CW_LOGS_PROD;
+    EC2_1_PROD -> CW_LOGS_PROD;
+    EC2_2_PROD -> CW_LOGS_PROD;
+    CW_LOGS_PROD -> CWD;
+    CW_ALARMS_PROD -> SNS;
+    CW_ALARMS_PROD -> CD_EC2_PROD [label="Rollback on Alarm"];
+    CW_ALARMS_PROD -> CD_LAMBDA_PROD [label="Rollback on Alarm"];
+}

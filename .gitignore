@@ -1,0 +1,37 @@
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+!*example.tfvars
+.terraform.tfstate.d/
+
+# --- AWS & Sensitive Data ---
+*.pem
+*.key
+creds/
+secrets/
+
+# --- IDE & OS ---
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# --- Build Artifacts ---
+build/
+dist/
+*.zip
+*.tar.gz
+/podinfo
+deployment/
+
+# --- Logs ---
+*.log
+npm-debug.log*
+
+# --- Temporary ---
+*.tmp
+*.bak
