@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS compilation_stage
+FROM golang:1.25-alpine AS compilation_stage
 
 ARG PODINFO_VERSION=unknown
 ARG BUILD_DATE=unknown
@@ -22,7 +22,7 @@ ARG PODINFO_VERSION=unknown
 ARG BUILD_DATE=unknown
 ARG VCS_REF=unknown
 
-LABEL org.opencontainers.image.source="https://github.com/milo-toptal/podinfo-demo" \
+LABEL org.opencontainers.image.source="https://github.com/Aptul9/reaas" \
       org.opencontainers.image.title="Podinfo" \
       org.opencontainers.image.description="Go microservice" \
       org.opencontainers.image.created="${BUILD_DATE}" \
