@@ -71,7 +71,7 @@ Rollback immediately if:
 - Lambda throttling > 0.5%
 
 Command:
-aws deploy stop-deployment --deployment-id <ID> --auto-rollback-enabled --profile milodev
+aws deploy stop-deployment --deployment-id <ID> --auto-rollback-enabled --profile default
 
 ## Success Criteria
 

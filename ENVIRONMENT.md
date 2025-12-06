@@ -8,20 +8,20 @@ This document describes the environment configuration, versions, variables, and 
 
 | Environment | Primary Region | Account ID |
 |-------------|----------------|------------|
-| dev         | eu-central-1   | 553600746148 |
-| prod        | eu-central-1   | 553600746148 |
+| dev         | eu-central-1   | 996549485948 |
+| prod        | eu-central-1   | 996549485948 |
 
 **Note:** Future multi-region expansion planned (see `docs/SCALABILITY.md`)
 
 ### AWS Profile
 
 **Local Development:**
-- Profile Name: `milodev`
-- Configured via: `aws configure --profile milodev`
+- Profile Name: `default`
+- Configured via: `aws configure --profile default`
 
 **CI/CD (GitHub Actions):**
 - Authentication: OIDC (no static credentials)
-- IAM Role: `arn:aws:iam::553600746148:role/github-actions-role`
+- IAM Role: `arn:aws:iam::996549485948:role/github-actions-role`
 
 ## Tool Versions
 
@@ -61,7 +61,7 @@ terraform {
 
 **Repository Name:** `podinfo-demo/podinfo`
 
-**Full URI:** `553600746148.dkr.ecr.eu-central-1.amazonaws.com/podinfo-demo/podinfo`
+**Full URI:** `996549485948.dkr.ecr.eu-central-1.amazonaws.com/podinfo-demo/podinfo`
 
 ### Image Variants
 
@@ -96,7 +96,7 @@ terraform {
 
 **Note:** Secret values are NEVER stored in version control. Retrieve via:
 ```bash
-aws secretsmanager get-secret-value --secret-id /dockyard/SUPER_SECRET_TOKEN --profile milodev
+aws secretsmanager get-secret-value --secret-id /dockyard/SUPER_SECRET_TOKEN --profile default
 ```
 
 ### KMS Keys
@@ -112,8 +112,8 @@ aws secretsmanager get-secret-value --secret-id /dockyard/SUPER_SECRET_TOKEN --p
 
 | Resource Type | Name/ID | ARN/URL |
 |---------------|---------|---------|
-| Function | `podinfo-demo-podinfo-dev` | `arn:aws:lambda:eu-central-1:553600746148:function:podinfo-demo-podinfo-dev` |
-| Alias | `live` | `arn:aws:lambda:eu-central-1:553600746148:function:podinfo-demo-podinfo-dev:live` |
+| Function | `podinfo-demo-podinfo-dev` | `arn:aws:lambda:eu-central-1:996549485948:function:podinfo-demo-podinfo-dev` |
+| Alias | `live` | `arn:aws:lambda:eu-central-1:996549485948:function:podinfo-demo-podinfo-dev:live` |
 | API Gateway | `niwxqj74o4` | `https://niwxqj74o4.execute-api.eu-central-1.amazonaws.com/` |
 | Log Group | `/aws/lambda/podinfo-demo-podinfo-dev` | - |
 | CodeDeploy App | `podinfo-demo-lambda-dev` | - |
@@ -125,14 +125,14 @@ aws secretsmanager get-secret-value --secret-id /dockyard/SUPER_SECRET_TOKEN --p
 |---------------|---------|---------|
 | VPC | `vpc-05c013a9e271c161d` | - |
 | ALB | `podinfo-demo-alb-dev` | `podinfo-demo-alb-dev-479277029.eu-central-1.elb.amazonaws.com` |
-| Target Group (Blue) | `podinfo-demo-blue-dev` | `arn:aws:elasticloadbalancing:eu-central-1:553600746148:targetgroup/podinfo-demo-blue-dev/...` |
-| Target Group (Green) | `podinfo-demo-green-dev` | `arn:aws:elasticloadbalancing:eu-central-1:553600746148:targetgroup/podinfo-demo-green-dev/...` |
+| Target Group (Blue) | `podinfo-demo-blue-dev` | `arn:aws:elasticloadbalancing:eu-central-1:996549485948:targetgroup/podinfo-demo-blue-dev/...` |
+| Target Group (Green) | `podinfo-demo-green-dev` | `arn:aws:elasticloadbalancing:eu-central-1:996549485948:targetgroup/podinfo-demo-green-dev/...` |
 | ASG | `podinfo-demo-asg-dev` | - |
 | Launch Template | `lt-03266c38e353c25e1` | - |
 | CodeDeploy App | `podinfo-demo-ec2-dev` | - |
 | CodeDeploy DG | `podinfo-demo-ec2-dg-dev` | - |
-| S3 Bucket (ALB Logs) | `podinfo-demo-alb-logs-dev-553600746148` | - |
-| S3 Bucket (Deployments) | `podinfo-demo-deployments-dev-553600746148` | - |
+| S3 Bucket (ALB Logs) | `podinfo-demo-alb-logs-dev-996549485948` | - |
+| S3 Bucket (Deployments) | `podinfo-demo-deployments-dev-996549485948` | - |
 
 ### CloudWatch Resources
 
@@ -150,7 +150,7 @@ aws secretsmanager get-secret-value --secret-id /dockyard/SUPER_SECRET_TOKEN --p
 
 | Topic Name | ARN | Purpose |
 |------------|-----|---------|
-| `podinfo-demo-alarms-dev` | `arn:aws:sns:eu-central-1:553600746148:podinfo-demo-alarms-dev` | CloudWatch alarm notifications |
+| `podinfo-demo-alarms-dev` | `arn:aws:sns:eu-central-1:996549485948:podinfo-demo-alarms-dev` | CloudWatch alarm notifications |
 
 ## Environment Variables
 
@@ -170,7 +170,7 @@ aws secretsmanager get-secret-value --secret-id /dockyard/SUPER_SECRET_TOKEN --p
 |----------|-------|-------------|
 | `AWS_REGION` | `eu-central-1` | AWS region |
 | `ENVIRONMENT` | `dev` / `prod` | Current environment |
-| `ECR_REGISTRY` | `553600746148.dkr.ecr.eu-central-1.amazonaws.com` | ECR registry |
+| `ECR_REGISTRY` | `996549485948.dkr.ecr.eu-central-1.amazonaws.com` | ECR registry |
 | `IMAGE_URI` | `{ECR_REGISTRY}/podinfo-demo/podinfo@sha256:...` | Container image digest |
 | `PODINFO_PORT` | `9898` | HTTP port |
 | `LOG_LEVEL` | `info` | Log verbosity |
@@ -185,7 +185,7 @@ variable "aws_region" {
 }
 
 variable "aws_profile" {
-  default = "milodev"
+  default = "default"
 }
 
 variable "project_name" {
@@ -214,7 +214,7 @@ variable "ecr_retention_count" {
 ```hcl
 variable "image_uri" {
   description = "Lambda container image URI"
-  # Example: "553600746148.dkr.ecr.eu-central-1.amazonaws.com/podinfo-demo/podinfo@sha256:..."
+  # Example: "996549485948.dkr.ecr.eu-central-1.amazonaws.com/podinfo-demo/podinfo@sha256:..."
 }
 
 variable "lambda_memory" {
@@ -235,7 +235,7 @@ variable "provisioned_concurrency" {
 ```hcl
 variable "image_uri" {
   description = "EC2 container image URI"
-  # Example: "553600746148.dkr.ecr.eu-central-1.amazonaws.com/podinfo-demo/podinfo@sha256:..."
+  # Example: "996549485948.dkr.ecr.eu-central-1.amazonaws.com/podinfo-demo/podinfo@sha256:..."
 }
 
 variable "instance_type" {
@@ -336,7 +336,7 @@ variable "podinfo_port" {
 
 | Secret Name | Description | Example Value |
 |-------------|-------------|---------------|
-| `AWS_ROLE_ARN` | OIDC role for GitHub Actions | `arn:aws:iam::553600746148:role/github-actions-role` |
+| `AWS_ROLE_ARN` | OIDC role for GitHub Actions | `arn:aws:iam::996549485948:role/github-actions-role` |
 
 ### Workflow Triggers
 

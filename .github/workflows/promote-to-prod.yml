@@ -126,7 +126,7 @@ jobs:
       - name: Deploy Code
         run: |
           DIGEST="${{ needs.resolve-artifacts.outputs.lambda_digest }}"
-          URI="553600746148.dkr.ecr.eu-central-1.amazonaws.com/${REPO_NAME}@${DIGEST}"
+          URI="996549485948.dkr.ecr.eu-central-1.amazonaws.com/${REPO_NAME}@${DIGEST}"
           FUNC="podinfo-demo-podinfo-prod"
           
           echo "Updating function code..."
@@ -234,7 +234,7 @@ jobs:
           
       - name: Prepare Deployment Artifacts
         run: |
-          URI="553600746148.dkr.ecr.eu-central-1.amazonaws.com/${REPO_NAME}@${{ needs.resolve-artifacts.outputs.ec2_digest }}"
+          URI="996549485948.dkr.ecr.eu-central-1.amazonaws.com/${REPO_NAME}@${{ needs.resolve-artifacts.outputs.ec2_digest }}"
           
           mkdir -p build/scripts
           
@@ -283,7 +283,7 @@ jobs:
           IMG="__IMG__"
           REG="eu-central-1"
           
-          aws ecr get-login-password --region ${REG} | docker login --username AWS --password-stdin 553600746148.dkr.ecr.eu-central-1.amazonaws.com
+          aws ecr get-login-password --region ${REG} | docker login --username AWS --password-stdin 996549485948.dkr.ecr.eu-central-1.amazonaws.com
           docker pull ${IMG}
           
           set +x 2>/dev/null
@@ -316,7 +316,7 @@ jobs:
       - name: Upload Bundle
         id: upload
         run: |
-          S3_BUCKET="podinfo-demo-deployments-prod-553600746148"
+          S3_BUCKET="podinfo-demo-deployments-prod-996549485948"
           S3_KEY="deployments/prod-${{ github.run_number }}.tar.gz"
           
           aws s3 cp deploy.tar.gz s3://${S3_BUCKET}/${S3_KEY}

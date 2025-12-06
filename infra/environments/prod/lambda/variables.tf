@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "aws_profile" {
   description = "Local CLI profile for authentication"
   type        = string
-  default     = "milodev"
+  default     = "default"
 }
 
 variable "project_name" {

@@ -61,7 +61,7 @@ jobs:
             TARGET_ENV="dev"
           fi
           
-          FULL_URI="553600746148.dkr.ecr.eu-central-1.amazonaws.com/podinfo-demo/podinfo@${SELECTED_DIGEST}"
+          FULL_URI="996549485948.dkr.ecr.eu-central-1.amazonaws.com/podinfo-demo/podinfo@${SELECTED_DIGEST}"
           
           echo "digest=${SELECTED_DIGEST}" >> $GITHUB_OUTPUT
           echo "image-uri=${FULL_URI}" >> $GITHUB_OUTPUT
@@ -164,7 +164,7 @@ jobs:
             TARGET_ENV="dev"
           fi
           
-          FULL_URI="553600746148.dkr.ecr.eu-central-1.amazonaws.com/podinfo-demo/podinfo@${SELECTED_DIGEST}"
+          FULL_URI="996549485948.dkr.ecr.eu-central-1.amazonaws.com/podinfo-demo/podinfo@${SELECTED_DIGEST}"
           
           echo "digest=${SELECTED_DIGEST}" >> $GITHUB_OUTPUT
           echo "image-uri=${FULL_URI}" >> $GITHUB_OUTPUT
@@ -305,7 +305,7 @@ jobs:
           echo ">>> Initializing container..."
           
           aws ecr get-login-password --region ${REGION} | \
-            docker login --username AWS --password-stdin 553600746148.dkr.ecr.eu-central-1.amazonaws.com
+            docker login --username AWS --password-stdin 996549485948.dkr.ecr.eu-central-1.amazonaws.com
           
           docker pull ${URI}
           
@@ -368,7 +368,7 @@ jobs:
       - name: Upload Bundle to S3
         id: upload
         run: |
-          TARGET_BUCKET="podinfo-demo-deployments-${{ steps.image.outputs.environment }}-553600746148"
+          TARGET_BUCKET="podinfo-demo-deployments-${{ steps.image.outputs.environment }}-996549485948"
           S3_KEY="deployments/podinfo-${{ github.run_number }}.tar.gz"
           
           aws s3 cp deployment.tar.gz s3://${TARGET_BUCKET}/${S3_KEY}

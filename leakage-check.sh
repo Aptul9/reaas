@@ -1,6 +1,6 @@
 #!/bin/bash
 
-AWS_PROFILE="milodev"
+AWS_PROFILE="default"
 SEARCH_PATTERN="SUPER_SECRET"
 LAMBDA_GROUP="/aws/lambda/podinfo-demo-podinfo-dev"
 CODEDEPLOY_GROUP="/aws/codedeploy-agent"

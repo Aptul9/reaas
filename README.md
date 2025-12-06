@@ -46,7 +46,7 @@ The architecture ensures high availability and zero-downtime deployments using B
 
 ### Prerequisites
 
-- AWS Account and CLI configured (Profile: `milodev` recommended).
+- AWS Account and CLI configured (Profile: `default` recommended).
 - Terraform v1.5.0+.
 - Docker Desktop or Engine.
 - GitHub CLI (optional, for workflow dispatch).
@@ -56,8 +56,8 @@ The architecture ensures high availability and zero-downtime deployments using B
 Ensure your local AWS profile is active:
 
 ```bash
-aws configure --profile milodev
-aws sts get-caller-identity --profile milodev
+aws configure --profile default
+aws sts get-caller-identity --profile default
 ```
 
 ### 2. Infrastructure Deployment

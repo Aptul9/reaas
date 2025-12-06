@@ -1,0 +1,1125 @@
+[0m[1mdata.tls_certificate.github: Reading...[0m[0m
+[0m[1mdata.aws_caller_identity.current: Reading...[0m[0m
+[0m[1mdata.aws_caller_identity.current: Read complete after 0s [id=996549485948][0m
+[0m[1mdata.tls_certificate.github: Read complete after 0s [id=772ed8785f2c647baa040d3a1b4aa6cafacb6267][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+ [36m<=[0m read (data resources)[0m
+
+Terraform will perform the following actions:
+
+[1m  # data.aws_iam_policy_document.github_actions_assume[0m will be read during apply
+  # (config refers to values not yet known)
+[0m [36m<=[0m[0m data "aws_iam_policy_document" "github_actions_assume" {
+      [32m+[0m[0m id            = (known after apply)
+      [32m+[0m[0m json          = (known after apply)
+      [32m+[0m[0m minified_json = (known after apply)
+
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions = [
+              [32m+[0m[0m "sts:AssumeRoleWithWebIdentity",
+            ]
+          [32m+[0m[0m effect  = "Allow"
+
+          [32m+[0m[0m condition {
+              [32m+[0m[0m test     = "StringEquals"
+              [32m+[0m[0m values   = [
+                  [32m+[0m[0m "sts.amazonaws.com",
+                ]
+              [32m+[0m[0m variable = "token.actions.githubusercontent.com:aud"
+            }
+          [32m+[0m[0m condition {
+              [32m+[0m[0m test     = "StringLike"
+              [32m+[0m[0m values   = [
+                  [32m+[0m[0m "repo:milo-toptal/podinfo-demo:*",
+                ]
+              [32m+[0m[0m variable = "token.actions.githubusercontent.com:sub"
+            }
+
+          [32m+[0m[0m principals {
+              [32m+[0m[0m identifiers = [
+                  [32m+[0m[0m (known after apply),
+                ]
+              [32m+[0m[0m type        = "Federated"
+            }
+        }
+    }
+
+[1m  # data.aws_iam_policy_document.github_actions_permissions[0m will be read during apply
+  # (config refers to values not yet known)
+[0m [36m<=[0m[0m data "aws_iam_policy_document" "github_actions_permissions" {
+      [32m+[0m[0m id            = (known after apply)
+      [32m+[0m[0m json          = (known after apply)
+      [32m+[0m[0m minified_json = (known after apply)
+
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "ecr:GetAuthorizationToken",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "*",
+            ]
+          [32m+[0m[0m sid       = "ECRAuth"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "ecr:BatchCheckLayerAvailability",
+              [32m+[0m[0m "ecr:BatchGetImage",
+              [32m+[0m[0m "ecr:CompleteLayerUpload",
+              [32m+[0m[0m "ecr:DescribeImages",
+              [32m+[0m[0m "ecr:DescribeRepositories",
+              [32m+[0m[0m "ecr:GetDownloadUrlForLayer",
+              [32m+[0m[0m "ecr:InitiateLayerUpload",
+              [32m+[0m[0m "ecr:ListImages",
+              [32m+[0m[0m "ecr:PutImage",
+              [32m+[0m[0m "ecr:UploadLayerPart",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m (known after apply),
+            ]
+          [32m+[0m[0m sid       = "ECRPush"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "apigateway:GET",
+              [32m+[0m[0m "apigatewayv2:GetApi",
+              [32m+[0m[0m "apigatewayv2:GetApis",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "*",
+            ]
+          [32m+[0m[0m sid       = "APIGateway"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "codedeploy:CreateDeployment",
+              [32m+[0m[0m "codedeploy:GetApplicationRevision",
+              [32m+[0m[0m "codedeploy:GetDeployment",
+              [32m+[0m[0m "codedeploy:GetDeploymentConfig",
+              [32m+[0m[0m "codedeploy:GetDeploymentGroup",
+              [32m+[0m[0m "codedeploy:ListDeploymentInstances",
+              [32m+[0m[0m "codedeploy:ListDeployments",
+              [32m+[0m[0m "codedeploy:RegisterApplicationRevision",
+              [32m+[0m[0m "codedeploy:UpdateDeploymentGroup",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "*",
+            ]
+          [32m+[0m[0m sid       = "CodeDeploy"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "lambda:GetAlias",
+              [32m+[0m[0m "lambda:GetFunction",
+              [32m+[0m[0m "lambda:GetFunctionConfiguration",
+              [32m+[0m[0m "lambda:ListVersionsByFunction",
+              [32m+[0m[0m "lambda:PublishVersion",
+              [32m+[0m[0m "lambda:UpdateAlias",
+              [32m+[0m[0m "lambda:UpdateFunctionCode",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "*",
+            ]
+          [32m+[0m[0m sid       = "Lambda"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "s3:GetObject",
+              [32m+[0m[0m "s3:ListBucket",
+              [32m+[0m[0m "s3:PutObject",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "arn:aws:s3:::podinfo-demo-deployments-*",
+              [32m+[0m[0m "arn:aws:s3:::podinfo-demo-deployments-*/*",
+            ]
+          [32m+[0m[0m sid       = "S3Deployments"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "secretsmanager:DescribeSecret",
+              [32m+[0m[0m "secretsmanager:GetSecretValue",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "arn:aws:secretsmanager:eu-central-1:*:secret:/dockyard/*",
+            ]
+          [32m+[0m[0m sid       = "SecretsRead"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "ec2:CreateLaunchTemplateVersion",
+              [32m+[0m[0m "ec2:DescribeLaunchTemplateVersions",
+              [32m+[0m[0m "ec2:DescribeLaunchTemplates",
+              [32m+[0m[0m "ec2:ModifyLaunchTemplate",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "*",
+            ]
+          [32m+[0m[0m sid       = "EC2LaunchTemplate"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "autoscaling:DescribeAutoScalingGroups",
+              [32m+[0m[0m "autoscaling:DescribeAutoScalingInstances",
+              [32m+[0m[0m "autoscaling:DescribeLaunchConfigurations",
+              [32m+[0m[0m "autoscaling:UpdateAutoScalingGroup",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "*",
+            ]
+          [32m+[0m[0m sid       = "AutoScalingUpdate"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "elasticloadbalancing:DescribeListeners",
+              [32m+[0m[0m "elasticloadbalancing:DescribeLoadBalancers",
+              [32m+[0m[0m "elasticloadbalancing:DescribeRules",
+              [32m+[0m[0m "elasticloadbalancing:DescribeTargetGroups",
+              [32m+[0m[0m "elasticloadbalancing:DescribeTargetHealth",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "*",
+            ]
+          [32m+[0m[0m sid       = "ALBDescribe"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "ec2:DescribeInstanceTypes",
+              [32m+[0m[0m "ec2:DescribeInstances",
+              [32m+[0m[0m "ec2:GetLaunchTemplateData",
+              [32m+[0m[0m "ec2:RunInstances",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "*",
+            ]
+          [32m+[0m[0m sid       = "EC2RunInstances"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "ec2:DescribeInstanceTypes",
+              [32m+[0m[0m "ec2:DescribeInstances",
+              [32m+[0m[0m "ec2:GetLaunchTemplateData",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "*",
+            ]
+          [32m+[0m[0m sid       = "EC2ReadForASGValidation"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "ec2:CreateLaunchTemplateVersion",
+              [32m+[0m[0m "ec2:DescribeLaunchTemplateVersions",
+              [32m+[0m[0m "ec2:DescribeLaunchTemplates",
+              [32m+[0m[0m "ec2:RunInstances",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "arn:aws:ec2:eu-central-1:996549485948:launch-template/lt-*",
+            ]
+          [32m+[0m[0m sid       = "EC2LaunchTemplateUse"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "autoscaling:UpdateAutoScalingGroup",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "arn:aws:autoscaling:eu-central-1:996549485948:autoScalingGroup:*:autoScalingGroupName/*",
+            ]
+          [32m+[0m[0m sid       = "ASGLaunchTemplateUse"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "iam:GetRole",
+              [32m+[0m[0m "iam:PassRole",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "arn:aws:iam::996549485948:instance-profile/podinfo-demo-ec2-*",
+              [32m+[0m[0m "arn:aws:iam::996549485948:role/podinfo-demo-ec2-*",
+            ]
+          [32m+[0m[0m sid       = "IAMPassRoleForEC2LaunchTemplate"
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "autoscaling:UpdateAutoScalingGroup",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "arn:aws:autoscaling:eu-central-1:996549485948:autoScalingGroup:*:autoScalingGroupName/*",
+            ]
+          [32m+[0m[0m sid       = "AllowLaunchTemplateUse"
+
+          [32m+[0m[0m condition {
+              [32m+[0m[0m test     = "StringEquals"
+              [32m+[0m[0m values   = [
+                  [32m+[0m[0m "arn:aws:ec2:eu-central-1:996549485948:launch-template/lt-*",
+                ]
+              [32m+[0m[0m variable = "autoscaling:LaunchTemplate"
+            }
+        }
+      [32m+[0m[0m statement {
+          [32m+[0m[0m actions   = [
+              [32m+[0m[0m "ec2:CreateTags",
+            ]
+          [32m+[0m[0m effect    = "Allow"
+          [32m+[0m[0m resources = [
+              [32m+[0m[0m "*",
+            ]
+          [32m+[0m[0m sid       = "EC2CreateTagsForLaunchTemplate"
+        }
+    }
+
+[1m  # aws_cloudwatch_dashboard.main[0m will be created
+[0m  [32m+[0m[0m resource "aws_cloudwatch_dashboard" "main" {
+      [32m+[0m[0m dashboard_arn  = (known after apply)
+      [32m+[0m[0m dashboard_body = jsonencode(
+            {
+              [32m+[0m[0m widgets = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 1
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m markdown = <<-EOT
+                                # System Status: DEV
+                                
+                                **Service:** Podinfo | **Region:** eu-central-1 | **Stack:** Lambda + EC2
+                            EOT
+                        }
+                      [32m+[0m[0m type       = "text"
+                      [32m+[0m[0m width      = 24
+                      [32m+[0m[0m x          = 0
+                      [32m+[0m[0m y          = 0
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/Lambda",
+                                  [32m+[0m[0m "Invocations",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#1f77b4"
+                                      [32m+[0m[0m label = "Execution Count"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Sum"
+                          [32m+[0m[0m title   = "Lambda Traffic Volume"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 0
+                      [32m+[0m[0m y          = 1
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/Lambda",
+                                  [32m+[0m[0m "Errors",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#d62728"
+                                      [32m+[0m[0m label = "Failed Executions"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m ".",
+                                  [32m+[0m[0m "Throttles",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#ff7f0e"
+                                      [32m+[0m[0m label = "Throttled Requests"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Sum"
+                          [32m+[0m[0m title   = "Lambda Error Rates"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 8
+                      [32m+[0m[0m y          = 1
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/Lambda",
+                                  [32m+[0m[0m "Duration",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#2ca02c"
+                                      [32m+[0m[0m label = "P50 Latency"
+                                      [32m+[0m[0m stat  = "p50"
+                                    },
+                                ],
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "...",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#9467bd"
+                                      [32m+[0m[0m label = "P99 Latency"
+                                      [32m+[0m[0m stat  = "p99"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Average"
+                          [32m+[0m[0m title   = "Lambda Duration (ms)"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 16
+                      [32m+[0m[0m y          = 1
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/ApiGateway",
+                                  [32m+[0m[0m "Count",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#1f77b4"
+                                      [32m+[0m[0m label = "Incoming Requests"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Sum"
+                          [32m+[0m[0m title   = "API Gateway Traffic"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 0
+                      [32m+[0m[0m y          = 7
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/ApiGateway",
+                                  [32m+[0m[0m "4XXError",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#ff7f0e"
+                                      [32m+[0m[0m label = "Client Errors (4xx)"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m ".",
+                                  [32m+[0m[0m "5XXError",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#d62728"
+                                      [32m+[0m[0m label = "Server Errors (5xx)"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Sum"
+                          [32m+[0m[0m title   = "API Gateway HTTP Codes"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 8
+                      [32m+[0m[0m y          = 7
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/ApiGateway",
+                                  [32m+[0m[0m "Latency",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#2ca02c"
+                                      [32m+[0m[0m label = "P50"
+                                      [32m+[0m[0m stat  = "p50"
+                                    },
+                                ],
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "...",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#9467bd"
+                                      [32m+[0m[0m label = "P99"
+                                      [32m+[0m[0m stat  = "p99"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Average"
+                          [32m+[0m[0m title   = "Integration Latency (ms)"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 16
+                      [32m+[0m[0m y          = 7
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/ApplicationELB",
+                                  [32m+[0m[0m "RequestCount",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#1f77b4"
+                                      [32m+[0m[0m label = "ALB Requests"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Sum"
+                          [32m+[0m[0m title   = "Load Balancer Throughput"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 0
+                      [32m+[0m[0m y          = 13
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/ApplicationELB",
+                                  [32m+[0m[0m "TargetResponseTime",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#2ca02c"
+                                      [32m+[0m[0m label = "P50"
+                                      [32m+[0m[0m stat  = "p50"
+                                    },
+                                ],
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "...",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#9467bd"
+                                      [32m+[0m[0m label = "P99"
+                                      [32m+[0m[0m stat  = "p99"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Average"
+                          [32m+[0m[0m title   = "Upstream Response Time"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 8
+                      [32m+[0m[0m y          = 13
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/ApplicationELB",
+                                  [32m+[0m[0m "HTTPCode_Target_5XX_Count",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#d62728"
+                                      [32m+[0m[0m label = "Target 5xx"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m ".",
+                                  [32m+[0m[0m "HTTPCode_ELB_5XX_Count",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#8c564b"
+                                      [32m+[0m[0m label = "LB 5xx"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Sum"
+                          [32m+[0m[0m title   = "Load Balancer Errors"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 16
+                      [32m+[0m[0m y          = 13
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/ApplicationELB",
+                                  [32m+[0m[0m "HealthyHostCount",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#2ca02c"
+                                      [32m+[0m[0m label = "Healthy Nodes"
+                                      [32m+[0m[0m stat  = "Average"
+                                    },
+                                ],
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m ".",
+                                  [32m+[0m[0m "UnHealthyHostCount",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#d62728"
+                                      [32m+[0m[0m label = "Unhealthy Nodes"
+                                      [32m+[0m[0m stat  = "Average"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Average"
+                          [32m+[0m[0m title   = "Target Group Health"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 0
+                      [32m+[0m[0m y          = 19
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/AutoScaling",
+                                  [32m+[0m[0m "GroupInServiceInstances",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#2ca02c"
+                                      [32m+[0m[0m label = "Active Instances"
+                                      [32m+[0m[0m stat  = "Average"
+                                    },
+                                ],
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m ".",
+                                  [32m+[0m[0m "GroupPendingInstances",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#ff7f0e"
+                                      [32m+[0m[0m label = "Pending"
+                                      [32m+[0m[0m stat  = "Average"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Average"
+                          [32m+[0m[0m title   = "ASG Capacity"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 8
+                      [32m+[0m[0m y          = 19
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "CWAgent",
+                                  [32m+[0m[0m "cpu_usage_idle",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#2ca02c"
+                                      [32m+[0m[0m label = "Idle %"
+                                      [32m+[0m[0m stat  = "Average"
+                                    },
+                                ],
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m ".",
+                                  [32m+[0m[0m "cpu_usage_iowait",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#ff7f0e"
+                                      [32m+[0m[0m label = "IO Wait %"
+                                      [32m+[0m[0m stat  = "Average"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 60
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Average"
+                          [32m+[0m[0m title   = "EC2 Fleet Metrics (Agent)"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m max = 100
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 8
+                      [32m+[0m[0m x          = 16
+                      [32m+[0m[0m y          = 19
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m query   = <<-EOT
+                                SOURCE '/aws/lambda/podinfo-demo-podinfo-dev'
+                                | fields @timestamp, @message
+                                | sort @timestamp desc
+                                | limit 20
+                            EOT
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stacked = false
+                          [32m+[0m[0m title   = "Live Lambda Logs"
+                        }
+                      [32m+[0m[0m type       = "log"
+                      [32m+[0m[0m width      = 24
+                      [32m+[0m[0m x          = 0
+                      [32m+[0m[0m y          = 25
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m metrics = [
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m "AWS/CodeDeploy",
+                                  [32m+[0m[0m "SucceededDeployments",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#2ca02c"
+                                      [32m+[0m[0m label = "Success"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                              [32m+[0m[0m [
+                                  [32m+[0m[0m ".",
+                                  [32m+[0m[0m "FailedDeployments",
+                                  [32m+[0m[0m {
+                                      [32m+[0m[0m color = "#d62728"
+                                      [32m+[0m[0m label = "Failed"
+                                      [32m+[0m[0m stat  = "Sum"
+                                    },
+                                ],
+                            ]
+                          [32m+[0m[0m period  = 300
+                          [32m+[0m[0m region  = "eu-central-1"
+                          [32m+[0m[0m stat    = "Sum"
+                          [32m+[0m[0m title   = "Deployment History"
+                          [32m+[0m[0m yAxis   = {
+                              [32m+[0m[0m left = {
+                                  [32m+[0m[0m min = 0
+                                }
+                            }
+                        }
+                      [32m+[0m[0m type       = "metric"
+                      [32m+[0m[0m width      = 12
+                      [32m+[0m[0m x          = 0
+                      [32m+[0m[0m y          = 31
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m height     = 6
+                      [32m+[0m[0m properties = {
+                          [32m+[0m[0m alarms = [
+                              [32m+[0m[0m "arn:aws:cloudwatch:eu-central-1:996549485948:alarm:Lambda-Error-Rate-High-dev",
+                              [32m+[0m[0m "arn:aws:cloudwatch:eu-central-1:996549485948:alarm:Lambda-Throttling-Detected-dev",
+                              [32m+[0m[0m "arn:aws:cloudwatch:eu-central-1:996549485948:alarm:High-5xx-Error-Rate-dev",
+                              [32m+[0m[0m "arn:aws:cloudwatch:eu-central-1:996549485948:alarm:Unhealthy-Host-Count-dev",
+                            ]
+                          [32m+[0m[0m title  = "Active Alerts"
+                        }
+                      [32m+[0m[0m type       = "alarm"
+                      [32m+[0m[0m width      = 12
+                      [32m+[0m[0m x          = 12
+                      [32m+[0m[0m y          = 31
+                    },
+                ]
+            }
+        )
+      [32m+[0m[0m dashboard_name = "podinfo-demo-dev"
+      [32m+[0m[0m id             = (known after apply)
+    }
+
+[1m  # aws_ecr_lifecycle_policy.podinfo[0m will be created
+[0m  [32m+[0m[0m resource "aws_ecr_lifecycle_policy" "podinfo" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m policy      = jsonencode(
+            {
+              [32m+[0m[0m rules = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m action       = {
+                          [32m+[0m[0m type = "expire"
+                        }
+                      [32m+[0m[0m description  = "Keep last 10 images"
+                      [32m+[0m[0m rulePriority = 1
+                      [32m+[0m[0m selection    = {
+                          [32m+[0m[0m countNumber = 10
+                          [32m+[0m[0m countType   = "imageCountMoreThan"
+                          [32m+[0m[0m tagStatus   = "any"
+                        }
+                    },
+                ]
+            }
+        )
+      [32m+[0m[0m registry_id = (known after apply)
+      [32m+[0m[0m repository  = "podinfo-demo/podinfo"
+    }
+
+[1m  # aws_ecr_repository.podinfo[0m will be created
+[0m  [32m+[0m[0m resource "aws_ecr_repository" "podinfo" {
+      [32m+[0m[0m arn                  = (known after apply)
+      [32m+[0m[0m id                   = (known after apply)
+      [32m+[0m[0m image_tag_mutability = "IMMUTABLE"
+      [32m+[0m[0m name                 = "podinfo-demo/podinfo"
+      [32m+[0m[0m registry_id          = (known after apply)
+      [32m+[0m[0m repository_url       = (known after apply)
+      [32m+[0m[0m tags                 = {
+          [32m+[0m[0m "Name" = "podinfo-demo-podinfo"
+        }
+      [32m+[0m[0m tags_all             = {
+          [32m+[0m[0m "Environment" = "global"
+          [32m+[0m[0m "ManagedBy"   = "Terraform"
+          [32m+[0m[0m "Name"        = "podinfo-demo-podinfo"
+          [32m+[0m[0m "Project"     = "podinfo-demo"
+        }
+
+      [32m+[0m[0m encryption_configuration {
+          [32m+[0m[0m encryption_type = "AES256"
+          [32m+[0m[0m kms_key         = (known after apply)
+        }
+
+      [32m+[0m[0m image_scanning_configuration {
+          [32m+[0m[0m scan_on_push = true
+        }
+    }
+
+[1m  # aws_ecr_repository_policy.podinfo[0m will be created
+[0m  [32m+[0m[0m resource "aws_ecr_repository_policy" "podinfo" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m registry_id = (known after apply)
+      [32m+[0m[0m repository  = "podinfo-demo/podinfo"
+    }
+
+[1m  # aws_iam_openid_connect_provider.github[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_openid_connect_provider" "github" {
+      [32m+[0m[0m arn             = (known after apply)
+      [32m+[0m[0m client_id_list  = [
+          [32m+[0m[0m "sts.amazonaws.com",
+        ]
+      [32m+[0m[0m id              = (known after apply)
+      [32m+[0m[0m tags            = {
+          [32m+[0m[0m "Name" = "podinfo-demo-github-oidc"
+        }
+      [32m+[0m[0m tags_all        = {
+          [32m+[0m[0m "Environment" = "global"
+          [32m+[0m[0m "ManagedBy"   = "Terraform"
+          [32m+[0m[0m "Name"        = "podinfo-demo-github-oidc"
+          [32m+[0m[0m "Project"     = "podinfo-demo"
+        }
+      [32m+[0m[0m thumbprint_list = [
+          [32m+[0m[0m "2b18947a6a9fc7764fd8b5fb18a863b0c6dac24f",
+        ]
+      [32m+[0m[0m url             = "https://token.actions.githubusercontent.com"
+    }
+
+[1m  # aws_iam_role.github_actions[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role" "github_actions" {
+      [32m+[0m[0m arn                   = (known after apply)
+      [32m+[0m[0m assume_role_policy    = (known after apply)
+      [32m+[0m[0m create_date           = (known after apply)
+      [32m+[0m[0m force_detach_policies = false
+      [32m+[0m[0m id                    = (known after apply)
+      [32m+[0m[0m managed_policy_arns   = (known after apply)
+      [32m+[0m[0m max_session_duration  = 3600
+      [32m+[0m[0m name                  = "podinfo-demo-github-actions"
+      [32m+[0m[0m name_prefix           = (known after apply)
+      [32m+[0m[0m path                  = "/"
+      [32m+[0m[0m tags                  = {
+          [32m+[0m[0m "Name" = "podinfo-demo-github-actions-role"
+        }
+      [32m+[0m[0m tags_all              = {
+          [32m+[0m[0m "Environment" = "global"
+          [32m+[0m[0m "ManagedBy"   = "Terraform"
+          [32m+[0m[0m "Name"        = "podinfo-demo-github-actions-role"
+          [32m+[0m[0m "Project"     = "podinfo-demo"
+        }
+      [32m+[0m[0m unique_id             = (known after apply)
+
+      [32m+[0m[0m inline_policy (known after apply)
+    }
+
+[1m  # aws_iam_role_policy.github_actions[0m will be created
+[0m  [32m+[0m[0m resource "aws_iam_role_policy" "github_actions" {
+      [32m+[0m[0m id          = (known after apply)
+      [32m+[0m[0m name        = "podinfo-demo-github-actions-policy"
+      [32m+[0m[0m name_prefix = (known after apply)
+      [32m+[0m[0m policy      = (known after apply)
+      [32m+[0m[0m role        = (known after apply)
+    }
+
+[1m  # aws_kms_alias.main[0m will be created
+[0m  [32m+[0m[0m resource "aws_kms_alias" "main" {
+      [32m+[0m[0m arn            = (known after apply)
+      [32m+[0m[0m id             = (known after apply)
+      [32m+[0m[0m name           = "alias/podinfo-demo"
+      [32m+[0m[0m name_prefix    = (known after apply)
+      [32m+[0m[0m target_key_arn = (known after apply)
+      [32m+[0m[0m target_key_id  = (known after apply)
+    }
+
+[1m  # aws_kms_key.main[0m will be created
+[0m  [32m+[0m[0m resource "aws_kms_key" "main" {
+      [32m+[0m[0m arn                                = (known after apply)
+      [32m+[0m[0m bypass_policy_lockout_safety_check = false
+      [32m+[0m[0m customer_master_key_spec           = "SYMMETRIC_DEFAULT"
+      [32m+[0m[0m deletion_window_in_days            = 7
+      [32m+[0m[0m description                        = "podinfo-demo encryption key"
+      [32m+[0m[0m enable_key_rotation                = true
+      [32m+[0m[0m id                                 = (known after apply)
+      [32m+[0m[0m is_enabled                         = true
+      [32m+[0m[0m key_id                             = (known after apply)
+      [32m+[0m[0m key_usage                          = "ENCRYPT_DECRYPT"
+      [32m+[0m[0m multi_region                       = (known after apply)
+      [32m+[0m[0m policy                             = (known after apply)
+      [32m+[0m[0m rotation_period_in_days            = (known after apply)
+      [32m+[0m[0m tags                               = {
+          [32m+[0m[0m "Name" = "podinfo-demo-kms"
+        }
+      [32m+[0m[0m tags_all                           = {
+          [32m+[0m[0m "Environment" = "global"
+          [32m+[0m[0m "ManagedBy"   = "Terraform"
+          [32m+[0m[0m "Name"        = "podinfo-demo-kms"
+          [32m+[0m[0m "Project"     = "podinfo-demo"
+        }
+    }
+
+[1m  # aws_kms_key_policy.main[0m will be created
+[0m  [32m+[0m[0m resource "aws_kms_key_policy" "main" {
+      [32m+[0m[0m bypass_policy_lockout_safety_check = false
+      [32m+[0m[0m id                                 = (known after apply)
+      [32m+[0m[0m key_id                             = (known after apply)
+      [32m+[0m[0m policy                             = jsonencode(
+            {
+              [32m+[0m[0m Statement = [
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = "kms:*"
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m AWS = "arn:aws:iam::996549485948:root"
+                        }
+                      [32m+[0m[0m Resource  = "*"
+                      [32m+[0m[0m Sid       = "Enable IAM User Permissions"
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = [
+                          [32m+[0m[0m "kms:Encrypt",
+                          [32m+[0m[0m "kms:Decrypt",
+                          [32m+[0m[0m "kms:ReEncrypt*",
+                          [32m+[0m[0m "kms:GenerateDataKey*",
+                          [32m+[0m[0m "kms:CreateGrant",
+                          [32m+[0m[0m "kms:DescribeKey",
+                        ]
+                      [32m+[0m[0m Condition = {
+                          [32m+[0m[0m ArnLike = {
+                              [32m+[0m[0m "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:eu-central-1:996549485948:*"
+                            }
+                        }
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "logs.eu-central-1.amazonaws.com"
+                        }
+                      [32m+[0m[0m Resource  = "*"
+                      [32m+[0m[0m Sid       = "Allow CloudWatch Logs"
+                    },
+                  [32m+[0m[0m {
+                      [32m+[0m[0m Action    = [
+                          [32m+[0m[0m "kms:Decrypt",
+                          [32m+[0m[0m "kms:GenerateDataKey",
+                        ]
+                      [32m+[0m[0m Effect    = "Allow"
+                      [32m+[0m[0m Principal = {
+                          [32m+[0m[0m Service = "secretsmanager.amazonaws.com"
+                        }
+                      [32m+[0m[0m Resource  = "*"
+                      [32m+[0m[0m Sid       = "Allow Secrets Manager"
+                    },
+                ]
+              [32m+[0m[0m Version   = "2012-10-17"
+            }
+        )
+    }
+
+[1m  # aws_sns_topic.alarms[0m will be created
+[0m  [32m+[0m[0m resource "aws_sns_topic" "alarms" {
+      [32m+[0m[0m arn                         = (known after apply)
+      [32m+[0m[0m beginning_archive_time      = (known after apply)
+      [32m+[0m[0m content_based_deduplication = false
+      [32m+[0m[0m display_name                = "Podinfo ALERTS"
+      [32m+[0m[0m fifo_throughput_scope       = (known after apply)
+      [32m+[0m[0m fifo_topic                  = false
+      [32m+[0m[0m id                          = (known after apply)
+      [32m+[0m[0m kms_master_key_id           = (known after apply)
+      [32m+[0m[0m name                        = "podinfo-demo-alarms"
+      [32m+[0m[0m name_prefix                 = (known after apply)
+      [32m+[0m[0m owner                       = (known after apply)
+      [32m+[0m[0m policy                      = (known after apply)
+      [32m+[0m[0m signature_version           = (known after apply)
+      [32m+[0m[0m tags                        = {
+          [32m+[0m[0m "Name" = "podinfo-demo-alarms-topic"
+        }
+      [32m+[0m[0m tags_all                    = {
+          [32m+[0m[0m "Environment" = "global"
+          [32m+[0m[0m "ManagedBy"   = "Terraform"
+          [32m+[0m[0m "Name"        = "podinfo-demo-alarms-topic"
+          [32m+[0m[0m "Project"     = "podinfo-demo"
+        }
+      [32m+[0m[0m tracing_config              = (known after apply)
+    }
+
+[1m  # aws_sns_topic.deployments[0m will be created
+[0m  [32m+[0m[0m resource "aws_sns_topic" "deployments" {
+      [32m+[0m[0m arn                         = (known after apply)
+      [32m+[0m[0m beginning_archive_time      = (known after apply)
+      [32m+[0m[0m content_based_deduplication = false
+      [32m+[0m[0m display_name                = "Podinfo Deployments"
+      [32m+[0m[0m fifo_throughput_scope       = (known after apply)
+      [32m+[0m[0m fifo_topic                  = false
+      [32m+[0m[0m id                          = (known after apply)
+      [32m+[0m[0m kms_master_key_id           = (known after apply)
+      [32m+[0m[0m name                        = "podinfo-demo-deployments"
+      [32m+[0m[0m name_prefix                 = (known after apply)
+      [32m+[0m[0m owner                       = (known after apply)
+      [32m+[0m[0m policy                      = (known after apply)
+      [32m+[0m[0m signature_version           = (known after apply)
+      [32m+[0m[0m tags                        = {
+          [32m+[0m[0m "Name" = "podinfo-demo-deployments-topic"
+        }
+      [32m+[0m[0m tags_all                    = {
+          [32m+[0m[0m "Environment" = "global"
+          [32m+[0m[0m "ManagedBy"   = "Terraform"
+          [32m+[0m[0m "Name"        = "podinfo-demo-deployments-topic"
+          [32m+[0m[0m "Project"     = "podinfo-demo"
+        }
+      [32m+[0m[0m tracing_config              = (known after apply)
+    }
+
+[1m  # aws_sns_topic_subscription.alarms_email[0m will be created
+[0m  [32m+[0m[0m resource "aws_sns_topic_subscription" "alarms_email" {
+      [32m+[0m[0m arn                             = (known after apply)
+      [32m+[0m[0m confirmation_timeout_in_minutes = 1
+      [32m+[0m[0m confirmation_was_authenticated  = (known after apply)
+      [32m+[0m[0m endpoint                        = "milo.kalezic@gmail.com"
+      [32m+[0m[0m endpoint_auto_confirms          = false
+      [32m+[0m[0m filter_policy_scope             = (known after apply)
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m owner_id                        = (known after apply)
+      [32m+[0m[0m pending_confirmation            = (known after apply)
+      [32m+[0m[0m protocol                        = "email"
+      [32m+[0m[0m raw_message_delivery            = false
+      [32m+[0m[0m topic_arn                       = (known after apply)
+    }
+
+[1m  # aws_sns_topic_subscription.deployments_email[0m will be created
+[0m  [32m+[0m[0m resource "aws_sns_topic_subscription" "deployments_email" {
+      [32m+[0m[0m arn                             = (known after apply)
+      [32m+[0m[0m confirmation_timeout_in_minutes = 1
+      [32m+[0m[0m confirmation_was_authenticated  = (known after apply)
+      [32m+[0m[0m endpoint                        = "milo.kalezic@gmail.com"
+      [32m+[0m[0m endpoint_auto_confirms          = false
+      [32m+[0m[0m filter_policy_scope             = (known after apply)
+      [32m+[0m[0m id                              = (known after apply)
+      [32m+[0m[0m owner_id                        = (known after apply)
+      [32m+[0m[0m pending_confirmation            = (known after apply)
+      [32m+[0m[0m protocol                        = "email"
+      [32m+[0m[0m raw_message_delivery            = false
+      [32m+[0m[0m topic_arn                       = (known after apply)
+    }
+
+[1mPlan:[0m [0m14 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  [32m+[0m[0m aws_account_id            = "996549485948"
+  [32m+[0m[0m aws_region                = "eu-central-1"
+  [32m+[0m[0m dashboard_url             = "https://eu-central-1.console.aws.amazon.com/cloudwatch/home?region=eu-central-1#dashboards:name=podinfo-demo-dev"
+  [32m+[0m[0m ecr_repository_arn        = (known after apply)
+  [32m+[0m[0m ecr_repository_url        = (known after apply)
+  [32m+[0m[0m github_actions_role_arn   = (known after apply)
+  [32m+[0m[0m kms_key_arn               = (known after apply)
+  [32m+[0m[0m kms_key_id                = (known after apply)
+  [32m+[0m[0m sns_alarms_topic_arn      = (known after apply)
+  [32m+[0m[0m sns_deployments_topic_arn = (known after apply)
+[90m
+─────────────────────────────────────────────────────────────────────────────[0m
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.

@@ -9,7 +9,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "podinfo-demo-terraform-state"
+    bucket = "podinfo-demo-terraform-state-996549485948"
     key    = "global/terraform.tfstate"
     region = "eu-central-1"
     use_lockfile = true
