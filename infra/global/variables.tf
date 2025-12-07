@@ -47,11 +47,11 @@ variable "domain_name" {
 variable "alarm_email" {
   description = "Recipient address for CloudWatch Alarm notifications"
   type        = string
-  default     = "milo.kalezic@gmail.com"
+  default     = "milo.kalezic@a.maritato99@gmail.com.com"
 }
 
 variable "deployment_email" {
   description = "Recipient address for CodeDeploy status notifications"
   type        = string
-  default     = "milo.kalezic@gmail.com"
+  default     = "milo.kalezic@a.maritato99@gmail.com.com"
 }
